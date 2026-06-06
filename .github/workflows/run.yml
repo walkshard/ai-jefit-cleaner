@@ -1,4 +1,4 @@
-name: Python Jefit Parser
+name: AI Jefit Parser
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - "input/**"
 
 jobs:
-  convert-data:
+  process-data:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,10 +19,12 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Pandas
-        run: pip install pandas
+      - name: Install dependencies
+        run: pip install pandas google-generativeai
 
-      - name: Run Parser
+      - name: Run AI Parser
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python clean_jefit.py
 
       - name: Save Clean Data
@@ -31,6 +33,6 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add output/Cleaned_Jefit_Data.csv
           git add output/Dashboard_Data.csv
-          git commit -m "Parsed vertical CSV" || echo "No changes to commit"
+          git commit -m "AI parsed data" || echo "No changes"
           git push
-
+          

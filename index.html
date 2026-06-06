@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jefit Data Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 md:p-8 font-sans">
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-blue-600 rounded-t-xl p-6 text-white shadow-md text-center">
+            <h1 class="text-2xl font-bold">Jefit Data Dashboard</h1>
+            <p class="text-blue-200 text-sm mt-1">AI-Processed Training Logs</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-b-xl shadow-md mb-8 flex flex-col items-center">
+            <p class="text-gray-600 mb-4 text-center">Your complete cleaned workout data is ready.</p>
+            <a href="output/Cleaned_Jefit_Data.csv" download class="px-8 py-3 bg-green-500 text-white font-bold rounded-full hover:bg-green-600 shadow-lg transition-transform transform hover:scale-105">
+                Download Full CSV
+            </a>
+        </div>
+
+        <div id="data-container" class="space-y-6">
+            <p class="text-center text-gray-500 font-medium animate-pulse">Loading preview from output folder...</p>
+        </div>
+    </div>
+
+    <script>
+        fetch('output/Dashboard_Data.csv')
+            .then(response => {
+                if (!response.ok) throw new Error("File not found");
+                return response.text();
+            })
+            .then(csvText => {
+                Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        renderData(results.data);
+                    }
+                });
+            })
+            .catch(error => {
+                document.getElementById('data-container').innerHTML = 
+                    `<div class="bg-red-50 p-4 rounded-lg text-center text-red-600 border border-red-200">
+                        No cleaned data found yet. Upload a file to the <b>input</b> folder and wait for the AI to finish.
+                    </div>`;
+            });
+
+        function renderData(data) {
+            const container = document.getElementById('data-container');
+            container.innerHTML = '';
+
+            const workouts = {};
+            data.forEach(row => {
+                const d = row.Date;
+                if (!workouts[d]) workouts[d] = [];
+                workouts[d].push(row);
+            });
+
+            const dates = Object.keys(workouts).sort((a, b) => new Date(b) - new Date(a)).slice(0, 5);
+
+            dates.forEach(date => {
+                let html = `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-gray-800 text-white px-4 py-2 font-bold">${date}</div>
+                    <div class="p-4 overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-500 uppercase border-b">
+                                <tr>
+                                    <th class="px-2 py-2">Exercise</th>
+                                    <th class="px-2 py-2">Set</th>
+                                    <th class="px-2 py-2">Weight</th>
+                                    <th class="px-2 py-2">Reps</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                workouts[date].forEach(row => {
+                    html += `
+                        <tr class="border-b last:border-0 border-gray-100">
+                            <td class="px-2 py-2 font-medium">${row.Exercise}</td>
+                            <td class="px-2 py-2 text-gray-500">${row.Set}</td>
+                            <td class="px-2 py-2 font-bold">${row.Weight}</td>
+                            <td class="px-2 py-2">${row.Reps}</td>
+                        </tr>`;
+                });
+
+                html += `</tbody></table></div></div>`;
+                container.innerHTML += html;
+            });
+            
+            container.innerHTML += `<p class="text-center text-sm text-gray-400 mt-4">Showing preview of last 5 workouts.</p>`;
+        }
+    </script>
+</body>
+</html>

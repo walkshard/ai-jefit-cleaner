@@ -1,5 +1,4 @@
-
-name: Process Jefit Data
+name: OpenWeight Jefit Converter
 
 on:
   push:
@@ -7,7 +6,7 @@ on:
       - "input/**"
 
 jobs:
-  clean-data:
+  convert-data:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -15,24 +14,19 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: "3.10"
+          node-version: "20"
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run AI Script
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python clean_jefit.py
+      - name: Run OpenWeight & Convert to CSV
+        run: node convert.js
 
       - name: Save Clean Data
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add output/Cleaned_Jefit_Data.csv
-          git commit -m "Auto-clean data" || echo "No changes to commit"
+          git commit -m "Converted via OpenWeight" || echo "No changes to commit"
           git push
           

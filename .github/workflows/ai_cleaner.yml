@@ -1,10 +1,10 @@
-```yaml
-name: Process Jefit Data with AI
+
+name: Process Jefit Data
 
 on:
   push:
     paths:
-      - 'input/**'
+      - "input/**"
 
 jobs:
   clean-data:
@@ -12,28 +12,27 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run AI Data Cleaner
+      - name: Run AI Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python clean_jefit.py
 
-      - name: Commit and Push Cleaned File
+      - name: Save Clean Data
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add output/Cleaned_Jefit_Data.csv
-          git commit -m "Auto-generated clean Jefit data via AI" || exit 0
+          git commit -m "Auto-clean data" || echo "No changes to commit"
           git push
-
-```
+          

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jefit Cloud Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-blue-800 rounded-t-xl p-6 text-white shadow-md text-center">
+            <h1 class="text-2xl font-bold">Jefit Cloud Dashboard</h1>
+            <p class="text-blue-200 text-sm mt-1">Viewing data from GitHub Output Folder</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-b-xl shadow-md mb-6">
+            <div id="controls" class="flex flex-col md:flex-row gap-3 mb-6 hidden">
+                <a id="downloadBtn" href="output/Cleaned_Jefit_Data.csv" download class="flex-1 text-center px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-sm">
+                    Download Clean CSV
+                </a>
+                <button id="copyBtn" class="flex-1 px-6 py-3 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-900 shadow-sm">
+                    Copy to Clipboard
+                </button>
+            </div>
+
+            <div id="statusMessage" class="text-center p-8 text-gray-500 font-medium animate-pulse">
+                Fetching latest cloud data...
+            </div>
+
+            <div id="tableContainer" class="hidden overflow-x-auto border rounded-lg">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3">Date</th>
+                            <th class="px-4 py-3">Exercise</th>
+                            <th class="px-4 py-3">Set</th>
+                            <th class="px-4 py-3">Weight</th>
+                            <th class="px-4 py-3">Reps</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewBody" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+            <p id="tableFooter" class="text-xs text-gray-400 mt-2 text-center hidden">Showing top 15 most recent sets</p>
+        </div>
+    </div>
+
+    <script>
+        let rawCsvData = "";
+
+        fetch('output/Cleaned_Jefit_Data.csv?t=' + new Date().getTime()) // Prevent browser caching
+            .then(response => {
+                if (!response.ok) throw new Error("File not found");
+                return response.text();
+            })
+            .then(csvText => {
+                rawCsvData = csvText;
+                document.getElementById('statusMessage').classList.add('hidden');
+                document.getElementById('controls').classList.remove('hidden');
+                document.getElementById('tableContainer').classList.remove('hidden');
+                document.getElementById('tableFooter').classList.remove('hidden');
+
+                Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        let html = "";
+                        // Show first 15 rows for preview
+                        const previewData = results.data.slice(0, 15);
+                        
+                        previewData.forEach(r => {
+                            html += `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-2 font-medium">${r.Date || ''}</td>
+                                    <td class="px-4 py-2">${r.Exercise || ''}</td>
+                                    <td class="px-4 py-2 text-gray-500">${r.Set || ''}</td>
+                                    <td class="px-4 py-2 font-bold">${r.Weight || ''}</td>
+                                    <td class="px-4 py-2">${r.Reps || ''}</td>
+                                </tr>
+                            `;
+                        });
+                        document.getElementById('previewBody').innerHTML = html;
+                    }
+                });
+            })
+            .catch(error => {
+                document.getElementById('statusMessage').innerHTML = `
+                    <div class="text-red-600 bg-red-50 border border-red-200 p-4 rounded-lg">
+                        <p class="font-bold mb-1">No Clean Data Found</p>
+                        <p class="text-sm">Upload your raw file to the 'input' folder via GitHub, wait 60 seconds for the cloud to process it, and refresh this page.</p>
+                    </div>
+                `;
+                document.getElementById('statusMessage').classList.remove('animate-pulse');
+            });
+
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const textArea = document.createElement("textarea");
+            textArea.value = rawCsvData;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            const btn = document.getElementById('copyBtn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = originalText, 2000);
+        });
+    </script>
+</body>
+</html>

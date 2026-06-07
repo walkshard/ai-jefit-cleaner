@@ -1,0 +1,34 @@
+name: Jefit Cloud Parser
+
+on:
+  push:
+    paths:
+      - "input/**"
+
+jobs:
+  process-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install PapaParse
+        run: npm install papaparse
+
+      - name: Run Parser
+        run: node parse_jefit.js
+
+      - name: Save Cleaned CSV
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add output/
+          git commit -m "Parsed Jefit relational database" || echo "No changes"
+          git push

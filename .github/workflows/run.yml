@@ -1,4 +1,4 @@
-name: AI Jefit Parser
+name: AI Background Processor
 
 on:
   push:
@@ -22,17 +22,16 @@ jobs:
       - name: Install dependencies
         run: pip install pandas google-generativeai
 
-      - name: Run AI Parser
+      - name: Run AI Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python clean_jefit.py
 
-      - name: Save Clean Data
+      - name: Save Cleaned CSV
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add output/Cleaned_Jefit_Data.csv
-          git add output/Dashboard_Data.csv
-          git commit -m "AI parsed data" || echo "No changes"
+          git commit -m "AI processed Jefit data" || echo "No changes"
           git push
           
